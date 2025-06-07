@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import 'bootstrap/dist/css/bootstrap.min.css';
-
+//import 'bootstrap/dist/css/bootstrap.min.css';
 // import { MathJax, MathJaxContext } from 'better-react-mathjax';
-
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
 
