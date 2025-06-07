@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { MathJax, MathJaxContext } from 'better-react-mathjax';
 
 interface Point {
   x: number;
@@ -16,6 +17,7 @@ export default function LinearAlgebraIntro() {
     [1, 0],
     [0, 1],
   ]);
+  const isDrawing = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -28,20 +30,35 @@ export default function LinearAlgebraIntro() {
     drawAxes(ctx);
 
     // Draw original points
-    originalPoints.forEach((pt) => drawPoint(ctx, pt, 'blue'));
+    originalPoints.forEach((pt) => drawPoint(ctx, pt, 'blue', true));
 
     // Draw transformed points
     originalPoints.forEach((pt) => {
       const transformed = applyMatrix(pt, matrix);
-      drawPoint(ctx, transformed, 'red');
+      drawPoint(ctx, transformed, 'red', false);
     });
   }, [originalPoints, matrix]);
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const addPointFromEvent = (e: React.MouseEvent<HTMLCanvasElement, MouseEvent>) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = e.clientX - rect.left - CANVAS_WIDTH / 2;
-    const y = e.clientY - rect.top - CANVAS_HEIGHT / 2;
-    setOriginalPoints([...originalPoints, { x, y }]);
+    const y = -(e.clientY - rect.top - CANVAS_HEIGHT / 2); // Flip y-axis
+    setOriginalPoints((prev) => [...prev, { x, y }]);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    isDrawing.current = true;
+    addPointFromEvent(e);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (isDrawing.current) {
+      addPointFromEvent(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    isDrawing.current = false;
   };
 
   const handleSliderChange = (i: number, j: number, value: number) => {
@@ -61,6 +78,15 @@ export default function LinearAlgebraIntro() {
     ]);
   };
 
+  const latex = `
+$$\\begin{bmatrix} ${matrix[0][0].toFixed(2)} & ${matrix[0][1].toFixed(2)} \\\\ 
+${matrix[1][0].toFixed(2)} & ${matrix[1][1].toFixed(2)} \\end{bmatrix}
+\\begin{bmatrix} x \\\\ y \\end{bmatrix} =
+\\begin{bmatrix}
+${matrix[0][0].toFixed(2)}x + ${matrix[0][1].toFixed(2)}y \\\\ 
+${matrix[1][0].toFixed(2)}x + ${matrix[1][1].toFixed(2)}y
+\\end{bmatrix}$$`;
+
   return (
     <div className="container py-4">
       <h1 className="text-center">Intro to Linear Algebra</h1>
@@ -72,31 +98,42 @@ export default function LinearAlgebraIntro() {
           width={CANVAS_WIDTH}
           height={CANVAS_HEIGHT}
           className="border"
-          onClick={handleCanvasClick}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
         />
       </div>
 
-      <div className="row mt-4 justify-content-center">
-        {[0, 1].map((i) => (
-          <div className="col-6 d-flex flex-column align-items-center" key={i}>
-            {[0, 1].map((j) => (
-              <div className="mb-3" key={j}>
-                <label className="form-label">
-                  m[{i + 1}][{j + 1}] = {matrix[i][j].toFixed(2)}
-                </label>
-                <input
-                  type="range"
-                  min={-5}
-                  max={5}
-                  step={0.1}
-                  value={matrix[i][j]}
-                  className="form-range"
-                  onChange={(e) => handleSliderChange(i, j, parseFloat(e.target.value))}
-                />
-              </div>
-            ))}
-          </div>
-        ))}
+      <div className="d-flex justify-content-center align-items-start mt-4">
+        <div className="d-flex flex-row me-4">
+          {[0, 1].map((j) => (
+            <div className="d-flex flex-column me-3" key={j}>
+              {[0, 1].map((i) => (
+                <div className="mb-3" key={i}>
+                  <label className="form-label">
+                    {matrix[i][j].toFixed(2)}
+                  </label>
+                  <input
+                    type="range"
+                    min={-5}
+                    max={5}
+                    step={0.1}
+                    value={matrix[i][j]}
+                    className="form-range"
+                    onChange={(e) => handleSliderChange(i, j, parseFloat(e.target.value))}
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <MathJaxContext>
+            <MathJax>{`\\[${latex}\\]`}</MathJax>
+          </MathJaxContext>
+        </div>
       </div>
 
       <div className="text-center mt-3">
@@ -124,11 +161,17 @@ function drawAxes(ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 }
 
-function drawPoint(ctx: CanvasRenderingContext2D, pt: Point, color: string) {
-  ctx.fillStyle = color;
+function drawPoint(ctx: CanvasRenderingContext2D, pt: Point, color: string, filled: boolean) {
   ctx.beginPath();
-  ctx.arc(pt.x + CANVAS_WIDTH / 2, pt.y + CANVAS_HEIGHT / 2, 5, 0, 2 * Math.PI);
-  ctx.fill();
+  ctx.arc(pt.x + CANVAS_WIDTH / 2, -pt.y + CANVAS_HEIGHT / 2, 5, 0, 2 * Math.PI);
+  if (filled) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  } else {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
 
 function applyMatrix(pt: Point, matrix: number[][]): Point {
