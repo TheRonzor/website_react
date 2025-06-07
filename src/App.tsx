@@ -1,6 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import { MathJax, MathJaxContext } from 'better-react-mathjax';
+
+// import { MathJax, MathJaxContext } from 'better-react-mathjax';
+
+import 'katex/dist/katex.min.css';
+import { BlockMath } from 'react-katex';
 
 interface Point {
   x: number;
@@ -78,14 +82,21 @@ export default function LinearAlgebraIntro() {
     ]);
   };
 
+  /*
   const latex = `
-$$\\begin{bmatrix} ${matrix[0][0].toFixed(2)} & ${matrix[0][1].toFixed(2)} \\\\ 
+\\begin{bmatrix} ${matrix[0][0].toFixed(2)} & ${matrix[0][1].toFixed(2)} \\\\ 
 ${matrix[1][0].toFixed(2)} & ${matrix[1][1].toFixed(2)} \\end{bmatrix}
 \\begin{bmatrix} x \\\\ y \\end{bmatrix} =
 \\begin{bmatrix}
 ${matrix[0][0].toFixed(2)}x + ${matrix[0][1].toFixed(2)}y \\\\ 
 ${matrix[1][0].toFixed(2)}x + ${matrix[1][1].toFixed(2)}y
-\\end{bmatrix}$$`;
+\\end{bmatrix}`;
+*/
+  let latex = `\\begin{bmatrix} ${matrix[0][0].toFixed(2)} & ${matrix[0][1].toFixed(2)} \\\\ `;
+    latex += `${matrix[1][0].toFixed(2)} & ${matrix[1][1].toFixed(2)} \\end{bmatrix}`;
+    latex += `\\begin{bmatrix} x \\\\ y \\end{bmatrix} = \\begin{bmatrix}`;
+    latex += `${matrix[0][0].toFixed(2)}x + ${matrix[0][1].toFixed(2)}y \\\\ `.replace('+ -', '-');
+    latex += `${matrix[1][0].toFixed(2)}x + ${matrix[1][1].toFixed(2)}y \\end{bmatrix}`.replace('+ -', '-');
 
   return (
     <div className="container py-4">
@@ -105,20 +116,20 @@ ${matrix[1][0].toFixed(2)}x + ${matrix[1][1].toFixed(2)}y
         />
       </div>
 
-      <div className="d-flex justify-content-center align-items-start mt-4">
-        <div className="d-flex flex-row me-4">
+      <div className="d-flex justify-content-center mt-4">
+        {/* <div className="d-flex justify-content-center flex-row me-4 w-100"> */}
           {[0, 1].map((j) => (
-            <div className="d-flex flex-column me-3" key={j}>
+            <div className="d-flex flex-column me-3 w-25" key={j}>
               {[0, 1].map((i) => (
-                <div className="mb-3" key={i}>
-                  <label className="form-label">
+                <div className="mb-3 w-100" key={i}>
+                  <label className="form-label text-center w-100">
                     {matrix[i][j].toFixed(2)}
                   </label>
                   <input
                     type="range"
-                    min={-5}
-                    max={5}
-                    step={0.1}
+                    min={-2}
+                    max={2}
+                    step={0.01}
                     value={matrix[i][j]}
                     className="form-range"
                     onChange={(e) => handleSliderChange(i, j, parseFloat(e.target.value))}
@@ -127,14 +138,27 @@ ${matrix[1][0].toFixed(2)}x + ${matrix[1][1].toFixed(2)}y
               ))}
             </div>
           ))}
-        </div>
-
+        {/* </div> */}
+      
+        {/* 
         <div>
           <MathJaxContext>
             <MathJax>{`\\[${latex}\\]`}</MathJax>
           </MathJaxContext>
         </div>
+         */}
       </div>
+      
+      {/* 
+      <div>
+          <MathJaxContext>
+            <MathJax>{`\\[${latex}\\]`}</MathJax>
+          </MathJaxContext>
+      </div>
+       */}
+       <div>
+        <BlockMath math={latex} />
+       </div>
 
       <div className="text-center mt-3">
         <button className="btn btn-danger mx-2" onClick={clearCanvas}>Clear Plot</button>
